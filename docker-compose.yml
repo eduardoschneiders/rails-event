@@ -1,0 +1,50 @@
+version: '3'
+services:
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - tmp_db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres_user
+      - POSTGRES_PASSWORD=postgres_password
+      - POSTGRES_DB=app_development
+      - POSTGRES_HOST=postgres
+
+  redis:
+    image: redis
+    command: redis-server --port 6380
+    volumes:
+      - ./tmp/redis:/data
+
+  app:
+    environment:
+      - POSTGRES_USER=postgres_user
+      - POSTGRES_PASSWORD=postgres_password
+      - POSTGRES_DB=app_development
+      - POSTGRES_HOST=postgres
+      - REDIS_URL=redis://redis:6380
+    # env_file:
+      # - .env
+    stdin_open: true
+    tty: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - RAILS_ENV
+        - RAILS_MASTER_KEY
+    volumes:
+      - .:/app
+      # - tmp_app:/app/tmp/
+    ports:
+      - "3000:3000"
+      - "80:3000"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  tmp_db:
+  tmp_app:
